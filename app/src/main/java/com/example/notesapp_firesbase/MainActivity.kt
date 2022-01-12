@@ -1,14 +1,18 @@
 package com.example.notesapp_firesbase
 
-import android.app.Dialog
+import android.app.*
 import android.content.DialogInterface
+import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -21,34 +25,115 @@ import java.util.HashMap
 import com.google.firebase.firestore.QuerySnapshot
 
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.errorprone.annotations.Var
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var myRV: RecyclerView
     private lateinit var rvAdapter: RVAdapter
     private lateinit var etNote: EditText
-    private lateinit var btSave: Button
     private lateinit var noteBook: ArrayList<NoteBook>
     var db = FirebaseFirestore.getInstance()
 
-    var TAG: String = "IamMainActivity"
+    var TAG: String = "MainActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         //instructions pop
-        startAlert()
-        noteBook = arrayListOf()
+        val launchShared = getSharedPreferences("start", MODE_PRIVATE)
+        val editor = launchShared.edit()
+        val isFirst = launchShared.getBoolean("first", true)
+        if (isFirst) {
+            startAlert()
+            editor.putBoolean("first", false)
+            editor.apply()
+            println("$isFirst")
+        }
 
         //set up UI
+        val btInfo = findViewById<ImageButton>(R.id.ibInfo)
+        val btSave = findViewById<Button>(R.id.btSave)
+
         myRV = findViewById(R.id.rvMain)
         etNote = findViewById(R.id.etNote)
-        btSave = findViewById(R.id.btSave)
         rvAdapter = RVAdapter()
         myRV.adapter = rvAdapter
         myRV.layoutManager = LinearLayoutManager(applicationContext)
+        noteBook = arrayListOf()
         noteBook = getDate()
 
         //swipe gestures
+        trackGestures()
+
+        //button interactions
+        btSave.setOnClickListener {
+            saveData()
+        }
+        btInfo.setOnClickListener {
+            startAlert()
+        }
+
+    }
+    //CRUD: 1- save data to Firestore
+    private fun saveData() {
+        val user: MutableMap<String, Any> = HashMap()
+        val input = etNote.text
+        if ((input.isNotEmpty()) || (input.equals(""))) {
+            user["note"] = input.toString()
+
+            // Add a new document with a generated ID
+            db.collection("notes")
+                .add(user)
+                .addOnSuccessListener { documentReference ->
+                    Toast.makeText(this, "Added successfully to database", Toast.LENGTH_SHORT)
+                        .show()
+
+                    Log.d(
+                        TAG,
+                        "DocumentSnapshot added with ID: " + documentReference.id
+                    )
+                    noteBook.add(NoteBook(documentReference.id, etNote.text.toString()))
+                    rvAdapter.update(noteBook)
+                    etNote.text.clear()
+                }.addOnFailureListener { e -> Log.w(TAG, "Error adding document", e) }
+
+        } else {
+            Toast.makeText(
+                this,
+                "Please enter a value",
+                Toast.LENGTH_SHORT
+            )
+                .show()
+        }
+    }
+
+    //CRUD: 2- get data from Firestore
+    private fun getDate(): ArrayList<NoteBook> {
+        var notes = arrayListOf<NoteBook>()
+        db.collection("notes")
+            .get()
+            .addOnCompleteListener(OnCompleteListener<QuerySnapshot> { task ->
+                if (task.isSuccessful) {
+                    for (document in task.result!!) {
+                        document.data.map { (key, value) ->
+                            notes.add(NoteBook(document.id, "$value"))
+
+                            Log.d(
+                                TAG,
+                                document.data.values.toString() + " => " + document.data.keys
+                            )
+                        }
+                    }
+                    rvAdapter.update(notes)
+                } else {
+                    Log.w(TAG, "Error getting documents.", task.exception)
+                }
+            })
+        noteBook.distinct()
+        return notes
+    }
+
+    private fun trackGestures() {
         val swipeGestures = object : SwipeGestures(this) {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 when (direction) {
@@ -110,68 +195,7 @@ class MainActivity : AppCompatActivity() {
         }
         val touchHelper = ItemTouchHelper(swipeGestures)
         touchHelper.attachToRecyclerView(myRV)
-        //button interactions
-        //CRUD: 1- save data to Firestore
-        btSave.setOnClickListener {
-            val user: MutableMap<String, Any> = HashMap()
-            val input = etNote.text
-            if ((input.isNotEmpty()) || (input.equals(""))) {
-                user["note"] = input.toString()
 
-                // Add a new document with a generated ID
-                db.collection("notes")
-                    .add(user)
-                    .addOnSuccessListener { documentReference ->
-                        Toast.makeText(this, "Added successfully to database", Toast.LENGTH_SHORT)
-                            .show()
-
-                        Log.d(
-                            TAG,
-                            "DocumentSnapshot added with ID: " + documentReference.id
-                        )
-                        noteBook.add(NoteBook(documentReference.id, etNote.text.toString()))
-                        rvAdapter.update(noteBook)
-                        etNote.text.clear()
-                    }.addOnFailureListener { e -> Log.w(TAG, "Error adding document", e) }
-
-            } else {
-                Toast.makeText(
-                    this,
-                    "Please enter a value",
-                    Toast.LENGTH_SHORT
-                )
-                    .show()
-            }
-
-        }
-
-    }
-
-    //CRUD: 2- get data from Firestore
-    private fun getDate(): ArrayList<NoteBook> {
-        var notes = arrayListOf<NoteBook>()
-        db.collection("notes")
-            .get()
-            .addOnCompleteListener(OnCompleteListener<QuerySnapshot> { task ->
-                if (task.isSuccessful) {
-                    for (document in task.result!!) {
-                        document.data.map { (key, value) ->
-//                            noteBook = arrayListOf(NoteBook(document.id, "$value"))
-                            notes.add(NoteBook(document.id, "$value"))
-
-                            Log.d(
-                                TAG,
-                                document.data.values.toString() + " => " + document.data.keys
-                            )
-                        }
-                    }
-                    rvAdapter.update(notes)
-                } else {
-                    Log.w(TAG, "Error getting documents.", task.exception)
-                }
-            })
-        noteBook.distinct()
-        return notes
     }
 
     private fun startAlert() {
@@ -184,9 +208,6 @@ class MainActivity : AppCompatActivity() {
 
             dialogBuilder.dismiss()
         }
-
-
-
         dialogBuilder.show()
     }
 

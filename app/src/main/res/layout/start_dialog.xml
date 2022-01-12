@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
             android:padding="10dp"
-            android:text="-> To add: input words in bar below the click SAVE"
+            android:text="-> To add: input words in bar below the click SAVE."
             android:textAlignment="center" />
 
         <TextView
@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
             android:padding="10dp"
-            android:text="-> To delete:swipe noteto left . "
+            android:text="-> To delete:swipe note to left. "
             android:textAlignment="center" />
 
         <TextView
