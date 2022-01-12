@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">NotesApp-Firesbase</string>
+    <string name="enter_note">Enter Note..</string>
+</resources>

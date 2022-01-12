@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "54577191495",
+    "project_id": "notesapp-firesbase",
+    "storage_bucket": "notesapp-firesbase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:54577191495:android:62d7da7350a07b9601af62",
+        "android_client_info": {
+          "package_name": "com.example.notesapp_firesbase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "54577191495-423je59opvo1hpo7k9vb5te8pggtg2s3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJqsV8fv1aOOpGU5N4lE5-WJo0t3VdrP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "54577191495-423je59opvo1hpo7k9vb5te8pggtg2s3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
